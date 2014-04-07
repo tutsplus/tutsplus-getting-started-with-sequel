@@ -172,7 +172,7 @@ Notice how we've been using the same `DB` global object throughout the entire
 set of examples. Well, we're not deviating from it to insert some data into our
 repository.
 
-To insert data you request the same table as we did before. After selecting it,
+To insert data we request the same table as we did before. After selecting it,
 we request to insert a new record into it:
 
     DB[:posts].insert(title: "Hello Tuts+", body: "A really big post.")
@@ -180,7 +180,7 @@ we request to insert a new record into it:
 
 The arguments list consists of a hash of options. Each key matches a column in
 the table. If the record is successfully saved, you get the value of the
-primary key, usually an `id` property. That way, you have a means of accessing
+primary key, usually an `id` property. That way, we have a means of accessing
 it later.
 
 ### Updating Data
@@ -241,12 +241,12 @@ learned from the dataset perspective. Models in Sequel are just wrappers around
 instead of getting a hash or a dataset, you get an actual model instance with
 accessors to the various properties.
 
-    Post.where(id: 1).first
+    Post.where(id: 1).first # Returns an instance of Post
 
 The code sample fetches the record with the id of 1. However, `Sequel.model`
 allows you to simply reach that same record via the `[]` method:
 
-    Post[1]
+    Post[1] # Returns an instance of Post
 
 As you would expect, there are a load of different methods available in
 `Sequel::Model`:
@@ -266,7 +266,68 @@ for more details.
 
 ### Associations
 
+Similar to ActiveRecord, Sequel allows you to define associations between
+models by invoking class methods inside the model class. The conventions are
+must more SQL-like that ActiveRecord but they're pretty straightforward.
+
+    # Post has many Comments
+    class Post < Sequel::Model
+      one_to_many :comments
+    end
+
+    # Comment belongs to Post
+    class Comment < Sequel::Model
+      many_to_one :post
+    end
+
+The example demonstrates a relationship between a blog post and the comments
+users can submit. A post has many comments. In turn, the comments belong to a
+post. If nothing else is declared, we are assuming that:
+
+* There are two tables: `posts` and `comments`;
+* The `comments` table has a `post_id` property.
+
 ### Associations methods
+
+By having a relationship, you get a plethora of methods that allow you
+manipulate that relationship. For instance, a post can now access its comments:
+
+    post = Post[1]
+    post.comments # Returns an array of Comments
+
+The same way happens for the comments:
+
+    comment = Comment[1]
+    comment.post # Returns an instance of Post
+
+Let's now consider the example where you want to actually add a new comment to
+a particular post. You have all the data gathered and you know which to post to
+attach the comment to. Sequel provides a dynamic method that consists of `add_`
+and the associated model. So you get:
+
+    post = Post[1]
+    post.add_comment my_hash_with_data
+
+The same behavior is achieved as when calling the `save` method, except the
+association is properly set by adding the reference of the post into the
+comment, we don't need to do it ourselves.
+
+Another kind of relationship available in Sequel is the `many_to_many`
+relationship. It relies on a third table that holds the primary keys from both
+parties of the relationship, which can optionally include its own set of data.
+An example of this pattern is a product belonging to many categories at once,
+while a category holds many products of its own.
+
+    class Category < Sequel::Model
+      many_to_many :products
+    end
+     
+    class Product < Sequel::Model
+      many_to_many :categories
+    end
+
+This way you can reach out to a `product` and call the `categories` method on
+it and vice-versa; a `category` can be called the `products` method.
 
 ## Other Features
 
