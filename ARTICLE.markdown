@@ -13,7 +13,7 @@ so read on if you want to get your hands wet.
 
 ## Bootstrapping Sequel
 
-### Installtion
+### Installation
 
 Like almost any tool in Ruby, installing Sequel is as easy as installing a gem:
 
@@ -83,11 +83,91 @@ There are two perspectives you can assume when using Sequel. One of them is the
 more SQL-like approach, in which you consider data in the form of generic
 datasets.
 
-### Accessing Data
+### Querying for Data
 
-Let's consider a basic example of accessing a set of posts.
+Let's consider a basic example of accessing a set of posts. The resulting SQL
+query would be something in the lines of `SELECT * FROM posts`, pretty
+standard.
 
-* Insert
+> **Note:** Sequel abstracts SQL away by providing as much of a Ruby API as
+possible, making up for easier development and also greater protection against
+hacking.
+
+To achieve the result in Ruby, you access the `DB` global object:
+
+    DB[:posts]
+
+The symbol matches the respective table name. This instruction is super simple
+and yet so understandable: it's like the database is a hash and its many items
+in the hash are tables, represented by their name in the index.
+
+What if we want to filter those posts with a condition? For example, find a
+particular post by its id. To retrieve it, you use the `where` method:
+
+    DB[:posts].where(id: 1)
+
+The `where` method takes different [kinds of
+arguments](http://sequel.jeremyevans.net/rdoc/classes/Sequel/Dataset.html#method-i-where).
+Each key in the hash you pass matches a column in your table. The values can
+vary between strings, numbers, arrays, ranges and procs. Let me give you some
+examples for each one of them:
+
+    DB[:posts].where(id: 1)
+    # SELECT * FROM posts WHERE (id = 1)
+     
+    DB[:posts].where(id: 1..5)
+    # SELECT * FROM posts WHERE (id > 1 and id <= 5)
+     
+    DB[:posts].where(id: [1, 3, 6])
+    # SELECT * FROM posts WHERE (id IN (1, 3, 6))
+     
+    DB[:posts].where { id > 7 }
+    # SELECT * FROM posts WHERE (id > 7)
+
+Because of Sequel's design, you can chain multiple `where` calls and they will
+added to the query, which allows to iteratively build your queries without
+complications:
+
+    DB[:posts].where("id > ?", 1).where("id <= ?", 5)
+    # SELECT * FROM posts WHERE (id > 1 and id <= 5)
+
+If you want to know everything about filtering in Sequel, you can check more
+information in the [official
+documentation](http://sequel.jeremyevans.net/rdoc/files/doc/dataset_filtering_rdoc.html).
+
+You also have the possibility of choosing particular columns with the `select`
+method, sort results with the `order` method, limit the number of record with
+`limit` and [many more
+methods](http://sequel.jeremyevans.net/rdoc/files/doc/dataset_basics_rdoc.html#label-Methods+that+return+modified+datasets).
+Here's an example:
+
+    DB[:posts].select(:id, :name).order(:name).where(id: 1..5)
+    # SELECT id, name FROM posts WHERE (id > 7) ORDER BY name
+
+#### Retrieving data
+
+All of the features I've shown you up until here manipulate the SQL query to be
+executed in the database. You still don't have any data in your hands to use
+yet, let's learn what we can do to accomplish that.
+
+The most generic method, `all`, allows you to fetch all of the records, but
+there are also other methods you can use to retrieve data differently:
+
+* `first` gets you the first record;
+* `last` gets you the last record;
+* `[index]` gets you the record in that position;
+* `count` performs a `COUNT` query and retrieves the resulting amount of records;
+* `avg(:age)` gets you an average for a possible `age` attribute;
+* `max(:age)` gets the maximum value for a possible `age` attribute;
+* `max(:age)` gets the minimum value for a possible `age` attribute.
+
+All of these retrieve actual data in the form of a hash. Many more methods are
+at your disposal, check them out at the [correct
+section](sequel.jeremyevans.net/rdoc/files/doc/dataset_basics_rdoc.html#label-Methods+that+execute+code+on+the+database)
+in the docs.
+
+### Inserting Data
+
 * Update
 * Delete
 
