@@ -163,26 +163,117 @@ there are also other methods you can use to retrieve data differently:
 
 All of these retrieve actual data in the form of a hash. Many more methods are
 at your disposal, check them out at the [correct
-section](sequel.jeremyevans.net/rdoc/files/doc/dataset_basics_rdoc.html#label-Methods+that+execute+code+on+the+database)
+section](http://sequel.jeremyevans.net/rdoc/classes/Sequel/Dataset.html#2+-+Methods+that+execute+code+on+the+database)
 in the docs.
 
 ### Inserting Data
 
-* Update
-* Delete
+Notice how we've been using the same `DB` global object throughout the entire
+set of examples. Well, we're not deviating from it to insert some data into our
+repository.
+
+To insert data you request the same table as we did before. After selecting it,
+we request to insert a new record into it:
+
+    DB[:posts].insert(title: "Hello Tuts+", body: "A really big post.")
+    # INSERT INTO posts (title, body) VALUES ("Hello Tuts+", "A really big post.")
+
+The arguments list consists of a hash of options. Each key matches a column in
+the table. If the record is successfully saved, you get the value of the
+primary key, usually an `id` property. That way, you have a means of accessing
+it later.
+
+### Updating Data
+
+Updating data in your repository is achieved through the `update` method:
+
+    DB[:posts].update(title: "Hello Tuts+", body: "A really big post.")
+    # UPDATE posts SET title = "Hello Tuts+", body = "A really big post."
+
+Watch out for performing updates like this without filtering out your data
+first. Wait, we already know how to do that!
+
+    DB[:posts].where(id: [1,4,6]).update(title: "Hello Tuts+", body: "A really big post.")
+    # UPDATE posts SET title = "Hello Tuts+", body = "A really big post." WHERE id in (1,4,6)
+
+### Deleting Data
+
+The same way we use `insert` to add new data and `update` to change existing
+data, you use `delete` to remove data:
+
+    DB[:posts].delete
+    # DELETE FROM posts
+
+The same way you should be careful with updating data, pay the same attention
+to removing data, filter it out first:
+
+    DB[:posts].where(id: 1).delete
+    # DELETE FROM posts WHERE id = 1
+
+* * *
+
+As you can see by the examples given, Sequel closes the gap between developers
+and database systems a great deal. You can focus on your beautiful, semantic
+Ruby code and take maximum advantage of your database. That's what makes Sequel
+so appealing.
 
 ## Thinking Models
 
-* Models
-* Associations
-* Associations methods
+The second approach to using Sequel is model oriented. You resort to Ruby
+classes that represent and add behavior to your records. Using models gives you
+the possibility of establishing relationships between them as you'll see later.
+
+### Defining Models
+
+To define a model, you just create a class that inherits from `Sequel::Model`.
+That's it.
+
+    class Post < Sequel::Model
+    end
+
+The mapping that's established between the model and the table is very similar
+to ActiveRecord in that regard, it uses pluralization. If you have a model
+called `Post`, the table should be called `posts`.
+
+From this new class you've created you can perform any operation that you've
+learned from the dataset perspective. Models in Sequel are just wrappers around
+`Sequel::Dataset`. The main difference is in the return value, in the way that
+instead of getting a hash or a dataset, you get an actual model instance with
+accessors to the various properties.
+
+    Post.where(id: 1).first
+
+The code sample fetches the record with the id of 1. However, `Sequel.model`
+allows you to simply reach that same record via the `[]` method:
+
+    Post[1]
+
+As you would expect, there are a load of different methods available in
+`Sequel::Model`:
+
+* `save` allows you to insert a new record into the database. The object is
+  created via the `new` method with all the data and then you save it.
+
+* `update` changes the data in your object. You pass a hash of new data and it
+  persists.
+
+* `destroy` removes the record from the database.
+
+These are just some of the many commands you can issue to a model. You can the
+[full
+reference](sequel.jeremyevans.net/rdoc/classes/Sequel/Model/InstanceMethods.html)
+for more details.
+
+### Associations
+
+### Associations methods
 
 ## Other Features
 
-* Transactions
-* Migrations
-* Sharding
-* Plugins
+### Transactions
+### Migrations
+### Sharding
+### Plugins
 
 ## [?] Compared to ActiveRecord
 
