@@ -80,7 +80,7 @@ Now that you are connected to the database, let's operate on it!
 ## Thinking Datasets
 
 There are two perspectives you can assume when using Sequel. One of them is the
-more SQL-like approach, in which you consider data in the form of generic
+more SQL-like approach, _dataset oriented_, in which you consider data in the form of generic
 datasets.
 
 ### Querying for Data
@@ -114,13 +114,13 @@ examples for each one of them:
 
     DB[:posts].where(id: 1)
     # SELECT * FROM posts WHERE (id = 1)
-     
+
     DB[:posts].where(id: 1..5)
     # SELECT * FROM posts WHERE (id > 1 and id <= 5)
-     
+
     DB[:posts].where(id: [1, 3, 6])
     # SELECT * FROM posts WHERE (id IN (1, 3, 6))
-     
+
     DB[:posts].where { id > 7 }
     # SELECT * FROM posts WHERE (id > 7)
 
@@ -214,18 +214,23 @@ to removing data, filter it out first:
 
 As you can see by the examples given, Sequel closes the gap between developers
 and database systems a great deal. You can focus on your beautiful, semantic
-Ruby code and take maximum advantage of your database. That's what makes Sequel
-so appealing.
+Ruby code and take maximum advantage of your database. This dataset oriented
+approach awards different takes at managing your product's data. You can either
+build quick scripts to gather intelligence about your data or you can build
+solid application code with strong methods and practices, covered by tests.
+That's what makes Sequel so appealing, there's more than one way to tackle your
+data.
 
 ## Thinking Models
 
-The second approach to using Sequel is model oriented. You resort to Ruby
-classes that represent and add behavior to your records. Using models gives you
-the possibility of establishing relationships between them as you'll see later.
+The second approach to using Sequel is _model oriented_. You resort to Ruby
+classes that represent and add behavior to your records. Models give you the
+possibility of establishing relationships between them as you'll see in the
+examples ahead.
 
 ### Defining Models
 
-To define a model, you just create a class that inherits from `Sequel::Model`.
+To define a model, you create a class that inherits from `Sequel::Model`.
 That's it.
 
     class Post < Sequel::Model
@@ -243,7 +248,7 @@ accessors to the various properties.
 
     Post.where(id: 1).first # Returns an instance of Post
 
-The code sample fetches the record with the id of 1. However, `Sequel.model`
+The code sample fetches the record with the id of 1. However, `Sequel::Model`
 allows you to simply reach that same record via the `[]` method:
 
     Post[1] # Returns an instance of Post
@@ -259,8 +264,8 @@ As you would expect, there are a load of different methods available in
 
 * `destroy` removes the record from the database.
 
-These are just some of the many commands you can issue to a model. You can the
-[full
+These are the core methods to manipulate records as models. They are just some
+of the many commands you can issue to a model. You can check the [full
 reference](sequel.jeremyevans.net/rdoc/classes/Sequel/Model/InstanceMethods.html)
 for more details.
 
@@ -306,7 +311,7 @@ attach the comment to. Sequel provides a dynamic method that consists of `add_`
 and the associated model. So you get:
 
     post = Post[1]
-    post.add_comment my_hash_with_data
+    post.add_comment(comment_data)
 
 The same behavior is achieved as when calling the `save` method, except the
 association is properly set by adding the reference of the post into the
@@ -321,21 +326,82 @@ while a category holds many products of its own.
     class Category < Sequel::Model
       many_to_many :products
     end
-     
+
     class Product < Sequel::Model
       many_to_many :categories
     end
 
 This way you can reach out to a `product` and call the `categories` method on
-it and vice-versa; a `category` can be called the `products` method.
+it and vice-versa; a `category` can be called the `products` method. It assumes
+that a `categories_products` table exists to hold the relationship data.
+
+    MISSING EXAMPLE ON HAS MANY THROUGH
 
 ## Other Features
 
 ### Transactions
+
 ### Migrations
+
+Up until here we haven't specified how to actually manipulate the database
+schema. Sequel doesn't let you empty handed as it provides a solid migration
+mechanism. It's similar to ActiveRecord but with a tiny set of changes.
+
+In order to modify the database schema to embody the example above on doctors
+and patients, you would create the following migrations:
+
+    Sequel.migration do
+      change do
+        create_table :doctors do
+          primary_key :id
+          String :name
+          String :specialty
+          Time :created_at
+        end
+
+        create_table :patients do
+          primary_key :id
+          String :name
+          Bignum :ss_number
+          Time :created_at
+        end
+
+        create_join_table(
+          doctor_id: :doctors,
+          patient_id: :patients
+        )
+      end
+    end
+
+If you want to fully explore Sequel's migration mechanism, you can check [this
+part of the
+docs](http://sequel.jeremyevans.net/rdoc/files/doc/schema_modification_rdoc.html).
+It refers to the many possibilities for data types, options for each property
+being created, indexes and much more.
+
+How do you persist the changes into the database? You need to execute the
+`sequel` binary and tell it to migrate the changes.
+
+    $ sequel -m db/migrate postgres://tutsplus:password@localhost/my_app_db
+
+Most likely you will want to have a folder filled with migration files, similar
+to ActiveRecord. You pass the `-m` option to indicate a migration process, the
+folder where the migrations are stored and then the URI pointing to the
+database.
+
 ### Sharding
+
+
+
 ### Plugins
 
-## [?] Compared to ActiveRecord
-
 ## Conclusion
+
+We just unveiled the tip of Sequel's iceberg. In a time where Rails is more
+modular than ever, object oriented Ruby and test driven development are more
+present in the Ruby community, Sequel rises as a solid candidate for great
+database-backed applications. ActiveRecord is still in the spotlight but I
+believe it's not that distant at the moment.
+
+* Tease about ActiveRecord: comparison, experiences, etc.
+* Ask about a video course
