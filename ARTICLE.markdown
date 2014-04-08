@@ -335,11 +335,50 @@ This way you can reach out to a `product` and call the `categories` method on
 it and vice-versa; a `category` can be called the `products` method. It assumes
 that a `categories_products` table exists to hold the relationship data.
 
-    MISSING EXAMPLE ON HAS MANY THROUGH
+    class Doctor < Sequel::Model
+    end
+
+    class Patient < Sequel::Model
+    end
+
+    class Appointment < Sequel::Model
+    end
 
 ## Other Features
 
 ### Transactions
+
+Using transactions in Sequel is very straightforward. Every time you need to
+perform non-atomic, interdependent changes to your database, you can wrap your
+code under a transaction:
+
+    DB.transaction do
+      post = Post.new(post_data)
+      unless post.save
+        raise Sequel::Rollback
+      end
+
+      @comments_data.each do |comment|
+        post.add_comment(comment)
+      end
+    end
+
+You use the global `DB` object to start it and pass the code into a block.
+
+The example tries to show how to store the comments on a valid post. Should the
+latter be invalid for some reason — maybe the title was an empty string —, you
+shouldn't be able to add comments to that non-existing post. The transaction
+above is meaningful in the way that it prevents comments to be added at all.
+
+One thing to notice in the example is the exception being raised. You could
+abstract the details into a separate class and raise the exception there but
+we're being explicit. The point of the exception is to demonstrate that if you
+raise `Sequel::Rollback` the transaction is rolled back and code execution
+proceeds. However, if you raise any other exception, it will be reraised so you
+can treat it the way you find most useful in your application.
+
+If you need to look up on transactions further, check the [documentation on
+transactions](http://sequel.jeremyevans.net/rdoc/files/doc/transactions_rdoc.html).
 
 ### Migrations
 
@@ -389,19 +428,19 @@ to ActiveRecord. You pass the `-m` option to indicate a migration process, the
 folder where the migrations are stored and then the URI pointing to the
 database.
 
-### Sharding
-
-
-
-### Plugins
-
 ## Conclusion
 
-We just unveiled the tip of Sequel's iceberg. In a time where Rails is more
-modular than ever, object oriented Ruby and test driven development are more
-present in the Ruby community, Sequel rises as a solid candidate for great
-database-backed applications. ActiveRecord is still in the spotlight but I
-believe it's not that distant at the moment.
+We just unveiled the tip of Sequel's iceberg, as there are so many things yet
+to be told about Sequel such as plugins, support for sharding, hooks, testing
+integration, security, etc. Sequel's
+[documentation](http://sequel.jeremyevans.net/documentation.html) is
+brilliantly simple and organized and it should act as constant companion when
+using the tool.
+
+In a time where Rails is more modular than ever, object oriented Ruby and test
+driven development are more present in the Ruby community, Sequel rises as a
+solid candidate for great database-backed applications. ActiveRecord is still
+in the spotlight but I believe it's not that distant at the moment.
 
 * Tease about ActiveRecord: comparison, experiences, etc.
 * Ask about a video course
