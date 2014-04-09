@@ -1,15 +1,16 @@
 # Getting Started with Sequel
 
 Ever since Rails came up in 2005, creating database-backed web applications has
-never been easier. ActiveRecord still is one of its strongsuits because of how
+never been easier. ActiveRecord still is one of its strong suits because of how
 it integrates tightly with the rest of the framework. However, through the
 course of time some developers found the tool to be difficult to handle outside
 of Rails.
 
-Sequel is an Object-Relational Mapper (ORM) that qualifies as a first-class
-tool in your arsenal, in and out of Rails. It is well tested and maintained by
-the Ruby community. In this article you'll learn the bulk of Sequel's features
-so read on if you want to get your hands wet.
+[Sequel](http://sequel.jeremyevans.net) is an Object-Relational Mapper (ORM)
+that qualifies as a first-class tool in your arsenal, in and out of Rails. It
+is well tested and maintained by the Ruby community. In this article you'll
+learn the bulk of Sequel's features so read on if you want to get your hands
+dirty.
 
 ## Bootstrapping Sequel
 
@@ -33,8 +34,7 @@ gem in order for Sequel to interact properly with the database.
 
 There are many other adapters you can choose from, depending on which database
 system you pick. A full list of adapters that Sequel is found in [its
-documentation](http://sequel.jeremyevans.net/rdoc/files/doc/opening_databases_rdoc.html).
-Check the _Adapter specific connection options_ chapter.
+documentation](http://sequel.jeremyevans.net/rdoc/files/doc/opening_databases_rdoc.html#label-Adapter+specific+connection+options).
 
 Once you have these two gems installed, you will be ready to use Sequel to
 actually connect to a database.
@@ -125,8 +125,8 @@ examples for each one of them:
     # SELECT * FROM posts WHERE (id > 7)
 
 Because of Sequel's design, you can chain multiple `where` calls and they will
-added to the query, which allows to iteratively build your queries without
-complications:
+be added to the query, which allows you to iteratively build your queries
+without complications:
 
     DB[:posts].where("id > ?", 1).where("id <= ?", 5)
     # SELECT * FROM posts WHERE (id > 1 and id <= 5)
@@ -165,6 +165,14 @@ All of these retrieve actual data in the form of a hash. Many more methods are
 at your disposal, check them out at the [correct
 section](http://sequel.jeremyevans.net/rdoc/classes/Sequel/Dataset.html#2+-+Methods+that+execute+code+on+the+database)
 in the docs.
+
+You apply each of these methods on top of your query builder. An example of
+this would be:
+
+    DB[:posts].select(:id, :name).order(:name).where(id: 1..5).all
+
+You would be retrieving a dataset with all the posts whose ids are between 1
+and 5, but just the name and id, sorted by name.
 
 ### Inserting Data
 
@@ -267,13 +275,13 @@ As you would expect, there are a load of different methods available in
 These are the core methods to manipulate records as models. They are just some
 of the many commands you can issue to a model. You can check the [full
 reference](sequel.jeremyevans.net/rdoc/classes/Sequel/Model/InstanceMethods.html)
-for more details.
+for more details but these should get you started.
 
 ### Associations
 
 Similar to ActiveRecord, Sequel allows you to define associations between
 models by invoking class methods inside the model class. The conventions are
-must more SQL-like that ActiveRecord but they're pretty straightforward.
+must more SQL-like than ActiveRecord but they're pretty straightforward.
 
     # Post has many Comments
     class Post < Sequel::Model
@@ -335,14 +343,37 @@ This way you can reach out to a `product` and call the `categories` method on
 it and vice-versa; a `category` can be called the `products` method. It assumes
 that a `categories_products` table exists to hold the relationship data.
 
+An example of the very common relationship pattern used in ActiveRecord is
+`has_many :through`. Sequel has a different way of solving that challenge in a
+traditional SQL-like dialect:
+
     class Doctor < Sequel::Model
+      many_to_many :patients, join_table: :appointments
+      one_to_many :appointments
     end
 
     class Patient < Sequel::Model
+      many_to_many :doctors, join_table: :appointments
+      one_to_many :appointments
     end
 
     class Appointment < Sequel::Model
+      many_to_one :doctor
+      many_to_one :patient
     end
+
+Both doctors and patients can view their appointments. In order for the doctor
+to know which patient he's going to check, he goes through the appointments via
+the `join_table` option and reaches out to the respective patients.
+
+* `doctor.patients` retrieves all patients he's checked;
+* `doctor.appointments[index].patient` retrieves a patient for a particular
+  appointment.
+
+These are just some of the most used relationship patterns available in Sequel
+but you can check the remaining ones in these
+[two](http://sequel.jeremyevans.net/rdoc/files/doc/association_basics_rdoc.html)
+[locations](http://sequel.jeremyevans.net/rdoc/files/doc/advanced_associations_rdoc.html).
 
 ## Other Features
 
@@ -354,21 +385,22 @@ code under a transaction:
 
     DB.transaction do
       post = Post.new(post_data)
-      unless post.save
-        raise Sequel::Rollback
-      end
+      post.save
 
       @comments_data.each do |comment|
-        post.add_comment(comment)
+        unless post.add_comment(comment)
+          raise Sequel::Rollback
+        end
       end
     end
 
 You use the global `DB` object to start it and pass the code into a block.
 
 The example tries to show how to store the comments on a valid post. Should the
-latter be invalid for some reason — maybe the title was an empty string —, you
-shouldn't be able to add comments to that non-existing post. The transaction
-above is meaningful in the way that it prevents comments to be added at all.
+former be invalid for some reason — maybe the comment body was an empty string
+—, you wouldn't want the post to be created in the first place. The transaction
+above is meaningful in the way that it prevents the post to be persisted in
+case any of the comments fail to persist as well.
 
 One thing to notice in the example is the exception being raised. You could
 abstract the details into a separate class and raise the exception there but
@@ -432,7 +464,7 @@ database.
 
 We just unveiled the tip of Sequel's iceberg, as there are so many things yet
 to be told about Sequel such as plugins, support for sharding, hooks, testing
-integration, security, etc. Sequel's
+integration, security, the `sequel` executable, etc. Sequel's
 [documentation](http://sequel.jeremyevans.net/documentation.html) is
 brilliantly simple and organized and it should act as constant companion when
 using the tool.
@@ -442,5 +474,6 @@ driven development are more present in the Ruby community, Sequel rises as a
 solid candidate for great database-backed applications. ActiveRecord is still
 in the spotlight but I believe it's not that distant at the moment.
 
-* Tease about ActiveRecord: comparison, experiences, etc.
-* Ask about a video course
+Do you think that Sequel is a strong competitor to ActiveRecord? Or do you find
+Sequel to suit parallel purposes? Do you have experience with both tools and
+have an educated opinion? Let us know by hitting a comment below.
