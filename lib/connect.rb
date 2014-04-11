@@ -1,6 +1,7 @@
 require "bundler"
 Bundler.require
 require "yaml"
+require "logger"
 
 def connect_regular
   db = Sequel.connect("postgres://jose@localhost/my_app")

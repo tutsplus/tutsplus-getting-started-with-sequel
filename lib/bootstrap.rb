@@ -1,4 +1,4 @@
-DB = Sequel.sqlite(":memory:")
+DB = Sequel.sqlite(":memory:", loggers: [Logger.new($stdout)])
 
 DB.create_table :products do
   primary_key :id

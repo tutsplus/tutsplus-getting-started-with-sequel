@@ -1,6 +1,7 @@
 require "bundler"
 Bundler.require
 require "yaml"
+require "logger"
 
 require_relative "bootstrap"
 
