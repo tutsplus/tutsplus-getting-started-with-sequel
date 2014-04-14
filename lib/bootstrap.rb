@@ -1,5 +1,8 @@
 DB = Sequel.sqlite(":memory:", loggers: [Logger.new($stdout)])
 
+# Load validations for models
+Sequel::Model.plugin :validation_helpers
+
 DB.create_table :products do
   primary_key :id
   String :name
