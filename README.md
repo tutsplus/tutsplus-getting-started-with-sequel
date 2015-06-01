@@ -1,8 +1,13 @@
-# Getting Started with Sequel
+# [Getting Started With Sequel][published url]
+## Instructor: [José Mota][instructor url]
 
-This is the source code for the [entitled
-course](https://code.tutsplus.com/courses/getting-started-with-sequel).
+Sequel is the new Object-Relational Mapper in the Ruby world. With great support and community around it, Sequel aims to be an excellent asset for all sorts of database management tasks. If you find ActiveRecord too much for your next project and DataMapper to be very outdated, jump right in!
 
-## License
+------
 
-Check LICENSE.txt.
+These are source files for the Tuts+ course: [Getting Started With Sequel][published url]
+
+Available on [Tuts+](https://tutsplus.com). Teaching skills to millions worldwide.
+
+[published url]: https://code.tutsplus.com/courses/getting-started-with-sequel
+[instructor url]: https://tutsplus.com/authors/jose-mota
